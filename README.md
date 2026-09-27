@@ -2,6 +2,17 @@
 
 A PHP MVC invoice management system for creating, viewing, editing, and deleting sales invoices, managing products and invoice items, and generating PDF invoices.
 
+## Screenshots
+
+### Create Invoice
+![Create Invoice](screenshots/invoice-create.png)
+
+### Invoices List
+![Invoices List](screenshots/invoices-list.png)
+
+### Invoice PDF
+![Invoice PDF](screenshots/invoice-pdf.png)
+
 ## Features
 
 - Create and manage sales invoices
