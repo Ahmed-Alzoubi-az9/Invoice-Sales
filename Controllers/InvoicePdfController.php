@@ -52,9 +52,8 @@ class InvoicePdfController
                 return $symbol . number_format((float) $amount, 1);
             };
 
-            ob_start();
-            require __DIR__ . '/../views/invoices/pdf.php';
-            $html = ob_get_clean();
+            $renderPdfView = require __DIR__ . '/../views/invoices/pdf.php';
+            $html = $renderPdfView($invoice, $items, $invoiceNumber, $statusLabel, $escape, $formatMoney);
 
             $pdf->writeHTML($html, true, false, true, false, '');
             $pdf->Output('invoice_' . $invoiceNumber . '.pdf', $forceDownload ? 'D' : 'I');
