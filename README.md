@@ -1,29 +1,33 @@
 # Invoice Sales Management System
 
-A PHP MVC invoice management system for creating, viewing, editing, and deleting sales invoices, managing products and invoice items, and generating PDF invoices.
+A PHP MVC invoice management system for creating, viewing, editing, and deleting sales invoices, managing products and invoice items, and generating PDF invoices, with search, CSV export, and a modern Bootstrap interface.
 
 ## Screenshots
 
 ### Create Invoice
+
 ![Create Invoice](screenshots/invoice-create.png)
 
 ### Invoices List
+
 ![Invoices List](screenshots/invoices-list.png)
 
 ### Invoice PDF
+
 ![Invoice PDF](screenshots/invoice-pdf.png)
 
 ## Features
 
-- Create and manage sales invoices
-- Add and manage invoice items and products
-- View and list invoices
+- Create and manage sales invoices with customer, billing, and shipping details
+- Add and manage invoice items and products with quantity, rate, and tax
+- View and list invoices with live search
 - Edit and delete invoices
 - Generate PDF invoices
-- MySQL database integration
+- Export invoices to CSV
+- Automatic totals, discount, tax, and adjustment calculations
+- MySQL database integration with automatic table setup
 - AJAX-based client/server communication
-- MVC-based PHP structure
-- Service layer for invoice-related business logic
+- MVC-based PHP structure with service layer for business logic
 
 ## Technologies
 
@@ -34,6 +38,7 @@ A PHP MVC invoice management system for creating, viewing, editing, and deleting
 - HTML
 - CSS
 - Bootstrap
+- Font Awesome
 - Composer
 - TCPDF
 
@@ -44,10 +49,12 @@ Controllers/
 Core/
 Models/
 views/
+screenshots/
 InvoiceService.php
 api.php
 index.php
 invoices.php
+invoice_pdf.php
 app.js
 script.js
 style.css
@@ -69,7 +76,10 @@ composer.json
    ```
 
 3. Create the required MySQL database and configure the database connection in `Core/Database.php`.
+
 4. Run the project using a local PHP/Apache environment such as XAMPP.
+
+5. Open the app via http://localhost/Inovice_Sales/index.php.
 
 ## Notes
 
