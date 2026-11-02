@@ -95,19 +95,17 @@ class InvoiceItemManager {
             </td>
             <td>
                 <div class="qty-input-wrapper">
-                    <input type="number" class="item-input qty-input" name="items[${this.itemCount}][qty]" value="${qtyVal}" step="0.01" onchange="InvoiceCalculator.calculateRow(${this.itemCount})">
+                    <input type="number" class="item-input qty-input" name="items[${this.itemCount}][qty]" placeholder="Qty" value="${qtyVal}" step="0.01" onchange="InvoiceCalculator.calculateRow(${this.itemCount})">
                 </div>
-                <div class="unit-display">Unit</div>
             </td>
             <td>
-                <input type="number" class="item-input" name="items[${this.itemCount}][rate]" value="${rateVal}" step="0.01" onchange="InvoiceCalculator.calculateRow(${this.itemCount})">
+                <input type="number" class="item-input" name="items[${this.itemCount}][rate]" placeholder="Rate" value="${rateVal}" step="0.01" onchange="InvoiceCalculator.calculateRow(${this.itemCount})">
             </td>
             <td>
-                <input type="number" class="item-input" name="items[${this.itemCount}][tax]" value="${taxVal}" step="0.01" onchange="InvoiceCalculator.calculateRow(${this.itemCount})">
-                <div class="unit-display">%</div>
+                <input type="number" class="item-input" name="items[${this.itemCount}][tax]" placeholder="Tax %" value="${taxVal}" step="0.01" onchange="InvoiceCalculator.calculateRow(${this.itemCount})">
             </td>
             <td>
-                <input type="text" class="item-input" name="items[${this.itemCount}][amount]" value="${amountVal.toFixed(2)}" readonly>
+                <input type="text" class="item-input item-amount-input" name="items[${this.itemCount}][amount]" value="${amountVal.toFixed(2)}" readonly>
             </td>
             <td class="text-center">
                 <i class="fas fa-trash btn-remove-item" onclick="InvoiceItemManager.removeItem(this)"></i>
@@ -367,12 +365,15 @@ class InvoiceApp {
         return data;
     }
 
-    static async submitInvoice(e) {
+    static async submitInvoice(e, forcedStatus = null) {
         e.preventDefault();
 
         const data = this.collectFormData();
         if (this.editingInvoiceNumber) {
             data.invoice_number = this.editingInvoiceNumber;
+        }
+        if (forcedStatus) {
+            data.status = forcedStatus;
         }
 
         if (!data.customer) {
@@ -387,10 +388,19 @@ class InvoiceApp {
 
         try {
             const result = await InvoiceAPI.save(data);
-            this.showAlert('Invoice saved! Invoice #' + result.invoice_number, 'success');
+            const message = forcedStatus === 'draft'
+                ? `Invoice #${result.invoice_number} saved as draft.`
+                : 'Invoice saved! Invoice #' + result.invoice_number;
+            this.showAlert(message, 'success');
             this.editingInvoiceNumber = null;
             this.editingInvoiceStatus = null;
             this.resetForm();
+            // Reset the page title in case we were editing
+            document.title = 'Create New Invoice';
+            const pageTitle = document.querySelector('.page-title');
+            if (pageTitle) {
+                pageTitle.textContent = 'Create New Invoice';
+            }
             if (typeof loadInvoices === 'function') {
                 loadInvoices();
             }
@@ -1104,8 +1114,8 @@ function deleteInvoice(invoiceNumber) {
     InvoiceApp.deleteInvoice(invoiceNumber);
 }
 
-function saveDraft() {
-    InvoiceApp.showAlert('Draft saved successfully!', 'info');
+function saveDraft(event) {
+    InvoiceApp.submitInvoice(event, 'draft');
 }
 
 // Initialize when DOM is loaded

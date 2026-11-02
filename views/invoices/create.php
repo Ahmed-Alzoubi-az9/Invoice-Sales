@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="invoice-create-document">
 
 <head>
     <meta charset="UTF-8">
@@ -11,210 +11,241 @@
 </head>
 
 <body>
-    <div class="main-container">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h1 class="page-title">Create New Invoice</h1>
-            <a href="invoices.html" class="btn btn-outline-secondary mb-2">
-                <i class="fas fa-list"></i> View Invoices
+    <main class="main-container invoice-create-page">
+        <header class="invoice-page-header">
+            <h1 class="page-title mb-0">Create New Invoice</h1>
+            <a href="invoices.php" class="btn btn-outline-secondary invoice-list-link">
+                <i class="fas fa-list"></i> <span>View invoices</span>
             </a>
-        </div>
+        </header>
 
         <div id="alertContainer"></div>
 
-        <form id="invoiceForm">
-            <!-- Invoice Details Card -->
-            <div class="form-card">
-                <div class="row mb-4">
-                    <!-- LEFT COLUMN -->
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label required">Customer</label>
-                            <input type="text" class="form-control" id="customer" name="customer" placeholder="Select and begin typing" required>
-                        </div>
+        <form id="invoiceForm" class="invoice-create-form">
+            <section class="create-card invoice-parties-card" aria-labelledby="invoiceDetailsHeading">
+                <div class="create-card-heading">
+                    <h2 id="invoiceDetailsHeading">Invoice details</h2>
+                </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Bill To</label>
-                                <div class="address-box">
+                <div class="invoice-parties-grid">
+                    <div class="customer-panel">
+                        <label class="form-label required" for="customer">Customer</label>
+                        <input type="text" class="form-control" id="customer" name="customer" placeholder="Enter customer name" autocomplete="organization" required>
+
+                        <div class="address-grid">
+                            <div class="address-card">
+                                <div class="address-card-heading">
+                                    <label class="form-label mb-0" for="bill_to">Bill to</label>
                                     <div class="address-actions">
-                                        <button type="button" class="btn btn-outline-primary icon-square" id="billAddressBtn" title="Fill Bill To (modal)">
+                                        <button type="button" class="address-icon-btn" id="billAddressBtn" title="Fill billing address" aria-label="Fill billing address">
                                             <i class="fas fa-pen-to-square"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-secondary icon-square" id="billPinBtn" title="Enable manual editing">
+                                        <button type="button" class="address-icon-btn" id="billPinBtn" title="Enable manual editing" aria-label="Enable manual editing for billing address">
                                             <i class="fas fa-thumbtack"></i>
                                         </button>
                                     </div>
-                                    <textarea class="form-control address-textarea" id="bill_to" name="bill_to" rows="4" placeholder="--" disabled></textarea>
                                 </div>
+                                <textarea class="form-control address-textarea" id="bill_to" name="bill_to" rows="3" placeholder="Billing address" disabled></textarea>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Ship To</label>
-                                <div class="address-box">
+                            <div class="address-card">
+                                <div class="address-card-heading">
+                                    <label class="form-label mb-0" for="ship_to">Ship to</label>
                                     <div class="address-actions">
-                                        <button type="button" class="btn btn-outline-primary icon-square" id="shipAddressBtn" title="Fill Ship To (modal)">
+                                        <button type="button" class="address-icon-btn" id="shipAddressBtn" title="Fill shipping address" aria-label="Fill shipping address">
                                             <i class="fas fa-pen-to-square"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-secondary icon-square" id="shipPinBtn" title="Enable manual editing">
+                                        <button type="button" class="address-icon-btn" id="shipPinBtn" title="Enable manual editing" aria-label="Enable manual editing for shipping address">
                                             <i class="fas fa-thumbtack"></i>
                                         </button>
                                     </div>
-                                    <textarea class="form-control address-textarea" id="ship_to" name="ship_to" rows="4" placeholder="--" disabled></textarea>
+                                </div>
+                                <textarea class="form-control address-textarea" id="ship_to" name="ship_to" rows="3" placeholder="Shipping address" disabled></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="invoice-meta-panel">
+                        <div class="invoice-meta-fields">
+                            <div class="form-field invoice-number-field">
+                                <label class="form-label required" for="invoice_number">Invoice number</label>
+                                <div class="invoice-number-group">
+                                    <span class="invoice-prefix">INV-</span>
+                                    <input type="text" class="form-control" id="invoice_number" name="invoice_number" readonly>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label required">Invoice Number</label>
-                            <div class="invoice-number-group">
-                                <span class="invoice-prefix">INV-</span>
-                                <input type="text" class="form-control" id="invoice_number" name="invoice_number" readonly>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label required">Invoice Date</label>
+                            <div class="form-field">
+                                <label class="form-label required" for="invoice_date">Invoice date</label>
                                 <input type="date" class="form-control" id="invoice_date" name="invoice_date" value="2025-12-10" required>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Due Date</label>
+                            <div class="form-field">
+                                <label class="form-label" for="due_date">Due date</label>
                                 <input type="date" class="form-control" id="due_date" name="due_date" value="2026-01-09">
                             </div>
                         </div>
                     </div>
+                </div>
+            </section>
 
-                    <!-- RIGHT COLUMN -->
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-tag"></i> Tags</label>
-                            <input type="text" class="form-control" id="tags" placeholder="Tag">
-                        </div>
+            <section class="create-card invoice-settings-card" aria-labelledby="invoiceSettingsHeading">
+                <div class="create-card-heading">
+                    <h2 id="invoiceSettingsHeading">Payment</h2>
+                </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Allowed payment modes for this invoice</label>
-                            <select class="form-select" id="payment_mode" name="payment_mode">
-                                <option value="Bank" selected>Bank</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Visa">Visa</option>
-                            </select>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label required">Currency</label>
-                                <select class="form-select" id="currency" name="currency" required>
-                                    <option value="SAR" selected>SAR</option>
-                                    <option value="USD">USD</option>
-                                    <option value="JOD">JOD</option>
-                                    <option value="EUR">EUR</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Sale Agent</label>
-                                <select class="form-select" id="sale_agent" name="sale_agent">
-                                    <option value="ahmed alzoubi" selected>ahmed alzoubi</option>
-                                    <option value="Abdullah Alokour">Abdullah Alokour</option>
-                                    <option value="Ayman Adel">Ayman Adel</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Recurring Invoice?</label>
-                                <select class="form-select" id="recurring_invoice" name="recurring_invoice">
-                                    <option value="No" selected>No</option>
-                                    <option value="Every 1 month">Every 1 month</option>
-                                    <option value="Every 2 months">Every 2 months</option>
-                                    <option value="Every 3 months">Every 3 months</option>
-                                    <option value="Every 4 months">Every 4 months</option>
-                                    <option value="Every 5 months">Every 5 months</option>
-                                    <option value="Every 6 months">Every 6 months</option>
-                                    <option value="Every 7 months">Every 7 months</option>
-                                    <option value="Every 8 months">Every 8 months</option>
-                                    <option value="Every 9 months">Every 9 months</option>
-                                    <option value="Every 10 months">Every 10 months</option>
-                                    <option value="Every 11 months">Every 11 months</option>
-                                    <option value="Every 12 months">Every 12 months</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Discount Type</label>
-                                <select class="form-select" id="discount_type" name="discount_type">
-                                    <option value="No discount" selected>No discount</option>
-                                    <option value="Before Tax">Before Tax</option>
-                                    <option value="After Tax">After Tax</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Admin Note</label>
-                            <textarea class="form-control" id="admin_note" name="admin_note" rows="4"></textarea>
-                        </div>
+                <div class="primary-payment-grid">
+                    <div class="form-field">
+                        <label class="form-label" for="payment_mode">Payment mode</label>
+                        <select class="form-select" id="payment_mode" name="payment_mode">
+                            <option value="Bank" selected>Bank</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Visa">Visa</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label required" for="currency">Currency</label>
+                        <select class="form-select" id="currency" name="currency" required>
+                            <option value="SAR" selected>SAR</option>
+                            <option value="USD">USD</option>
+                            <option value="JOD">JOD</option>
+                            <option value="EUR">EUR</option>
+                        </select>
                     </div>
                 </div>
-            </div>
 
-            <!-- Items Card -->
-            <div class="items-card">
-                <div class="d-flex justify-content-end align-items-center mb-3">
-                    <select id="itemDropdown" class="form-select item-dropdown">
-                        <option value="">Select Item</option>
-                    </select>
+                <details class="invoice-more-options">
+                    <summary>More options</summary>
+                    <div class="settings-grid">
+                        <div class="form-field">
+                            <label class="form-label" for="sale_agent">Sales agent</label>
+                            <select class="form-select" id="sale_agent" name="sale_agent">
+                                <option value="ahmed alzoubi" selected>ahmed alzoubi</option>
+                                <option value="Abdullah Alokour">Abdullah Alokour</option>
+                                <option value="Ayman Adel">Ayman Adel</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="recurring_invoice">Recurring invoice</label>
+                            <select class="form-select" id="recurring_invoice" name="recurring_invoice">
+                                <option value="No" selected>No</option>
+                                <option value="Every 1 month">Every 1 month</option>
+                                <option value="Every 2 months">Every 2 months</option>
+                                <option value="Every 3 months">Every 3 months</option>
+                                <option value="Every 4 months">Every 4 months</option>
+                                <option value="Every 5 months">Every 5 months</option>
+                                <option value="Every 6 months">Every 6 months</option>
+                                <option value="Every 7 months">Every 7 months</option>
+                                <option value="Every 8 months">Every 8 months</option>
+                                <option value="Every 9 months">Every 9 months</option>
+                                <option value="Every 10 months">Every 10 months</option>
+                                <option value="Every 11 months">Every 11 months</option>
+                                <option value="Every 12 months">Every 12 months</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="discount_type">Discount type</label>
+                            <select class="form-select" id="discount_type" name="discount_type">
+                                <option value="No discount" selected>No discount</option>
+                                <option value="Before Tax">Before Tax</option>
+                                <option value="After Tax">After Tax</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="tags">Tags</label>
+                            <input type="text" class="form-control" id="tags" name="tags" placeholder="e.g. project, priority">
+                        </div>
+                        <div class="form-field settings-note-field">
+                            <label class="form-label" for="admin_note">Internal note</label>
+                            <textarea class="form-control" id="admin_note" name="admin_note" rows="2" placeholder="Add a note for your team (not shown to the customer)"></textarea>
+                        </div>
+                    </div>
+                </details>
+            </section>
+
+            <section class="create-card invoice-items-card" aria-labelledby="invoiceItemsHeading">
+                <div class="items-toolbar">
+                    <div class="create-card-heading mb-0">
+                        <h2 id="invoiceItemsHeading">Items</h2>
+                    </div>
+                    <div class="quick-add-field">
+                        <select id="itemDropdown" class="form-select item-dropdown" aria-label="Add a saved product">
+                            <option value="">Add saved product</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="items-table">
-                    <table class="table">
-                        <thead class="table-header">
+                <div class="invoice-items-scroll">
+                    <table class="table invoice-items-table">
+                        <colgroup>
+                            <col class="item-name-column">
+                            <col class="item-description-column">
+                            <col class="item-qty-column">
+                            <col class="item-rate-column">
+                            <col class="item-tax-column">
+                            <col class="item-amount-column">
+                            <col class="item-remove-column">
+                        </colgroup>
+                        <thead>
                             <tr>
-                                <th style="width: 15%;">Item</th>
-                                <th style="width: 25%;">Description</th>
-                                <th style="width: 10%;">Qty</th>
-                                <th style="width: 12%;">Rate</th>
-                                <th style="width: 12%;">Tax</th>
-                                <th style="width: 12%;">Amount</th>
-                                <th style="width: 5%;"></th>
+                                <th scope="col">Item</th>
+                                <th scope="col">Description</th>
+                                <th scope="col" class="text-center">Qty</th>
+                                <th scope="col" class="text-end">Rate</th>
+                                <th scope="col" class="text-center">Tax %</th>
+                                <th scope="col" class="text-end">Amount</th>
+                                <th scope="col"><span class="visually-hidden">Remove</span></th>
                             </tr>
                         </thead>
-                        <tbody id="itemsContainer">
-                        </tbody>
+                        <tbody id="itemsContainer"></tbody>
                     </table>
                 </div>
 
-                <!-- Totals Section -->
-                <div class="totals-section">
-                    <div class="total-row">
-                        <span class="total-label">Sub Total :</span>
-                        <span class="total-value" id="subTotal">SR0.00</span>
-                    </div>
-                    <div class="total-row">
-                        <span class="total-label">Discount</span>
-                        <input type="number" class="form-control total-input" id="discount" value="0" min="0" onchange="calculateTotals()">
-                        <select class="form-select" style="width: 80px;" id="discountUnit" onchange="calculateTotals()">
-                            <option value="%">%</option>
-                            <option value="fixed">Fixed</option>
-                        </select>
-                        <span class="total-value" id="discountAmount">-SR0.00</span>
-                    </div>
-                    <div class="total-row">
-                        <span class="total-label">Adjustment</span>
-                        <input type="number" class="form-control total-input" id="adjustment" value="0" onchange="calculateTotals()">
-                        <span class="total-value" id="adjustmentAmount">SR0.00</span>
-                    </div>
-                    <div class="total-row final-total">
-                        <span class="total-label">Total :</span>
-                        <span class="total-value" id="finalTotal">SR0.00</span>
+                <div class="invoice-items-footer">
+                    <button type="button" class="btn-add-item" onclick="addItem(null)">
+                        <i class="fas fa-plus"></i> Add item
+                    </button>
+
+                    <div class="totals-panel" aria-label="Invoice totals">
+                        <div class="total-row subtotal-row">
+                            <span class="total-label">Subtotal</span>
+                            <span class="total-value" id="subTotal">SR0.00</span>
+                        </div>
+                        <div class="total-row">
+                            <label class="total-label" for="discount">Discount</label>
+                            <div class="total-controls">
+                                <input type="number" class="form-control" id="discount" value="0" min="0" onchange="calculateTotals()">
+                                <select class="form-select" id="discountUnit" aria-label="Discount unit" onchange="calculateTotals()">
+                                    <option value="%">%</option>
+                                    <option value="fixed">Fixed</option>
+                                </select>
+                            </div>
+                            <span class="total-value" id="discountAmount">-SR0.00</span>
+                        </div>
+                        <div class="total-row">
+                            <label class="total-label" for="adjustment">Adjustment</label>
+                            <div class="total-controls">
+                                <input type="number" class="form-control" id="adjustment" value="0" aria-label="Adjustment amount" onchange="calculateTotals()">
+                            </div>
+                            <span class="total-value" id="adjustmentAmount">SR0.00</span>
+                        </div>
+                        <div class="total-row final-total">
+                            <span class="total-label">Total due</span>
+                            <span class="total-value" id="finalTotal">SR0.00</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="action-buttons">
-                    <button type="button" class="btn-draft" onclick="saveDraft()">Save as Draft</button>
-                    <button type="submit" class="btn-submit">Submit</button>
-                </div>
-            </div>
+                <footer class="invoice-form-footer">
+                    <div class="action-buttons">
+                        <button type="button" class="btn-draft" onclick="saveDraft(event)">
+                            <i class="fas fa-floppy-disk"></i> Save as draft
+                        </button>
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-paper-plane"></i> Create invoice
+                        </button>
+                    </div>
+                </footer>
+            </section>
         </form>
-    </div>
+    </main>
 
     <!-- Address Modal -->
     <div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
