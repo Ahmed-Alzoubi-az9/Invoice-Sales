@@ -63,6 +63,7 @@ class Database
                 ship_to TEXT,
                 invoice_date DATE NOT NULL,
                 due_date DATE NOT NULL,
+                status ENUM('draft','unpaid','paid') DEFAULT 'unpaid',
                 currency ENUM('USD','SAR','JOD','EUR') DEFAULT 'SAR',
                 payment_mode ENUM('Cash','Bank','Visa') DEFAULT 'Bank',
                 sale_agent VARCHAR(150),
@@ -86,6 +87,15 @@ class Database
         // Ensure tags column exists
         try {
             $this->pdo->exec("ALTER TABLE invoices ADD COLUMN tags VARCHAR(255)");
+        } catch (PDOException $e) {
+            if (strpos($e->getMessage(), '1060') === false && strpos($e->getMessage(), 'Duplicate column') === false) {
+                throw $e;
+            }
+        }
+
+        // Ensure status column exists (draft/unpaid/paid)
+        try {
+            $this->pdo->exec("ALTER TABLE invoices ADD COLUMN status ENUM('draft','unpaid','paid') DEFAULT 'unpaid'");
         } catch (PDOException $e) {
             if (strpos($e->getMessage(), '1060') === false && strpos($e->getMessage(), 'Duplicate column') === false) {
                 throw $e;

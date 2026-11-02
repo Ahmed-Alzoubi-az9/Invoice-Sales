@@ -129,7 +129,7 @@ class Ajax {
         return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
 
-            if (!headers['Content-Type'] && (method === 'POST' || method === 'DELETE')) {
+            if (!headers['Content-Type'] && method !== 'GET') {
                 headers['Content-Type'] = 'application/json';
             }
 
@@ -169,7 +169,7 @@ class Ajax {
 
             xhr.timeout = 30000;
 
-            if (data && (method === 'POST' || method === 'DELETE')) {
+            if (data && method !== 'GET') {
                 xhr.send(JSON.stringify(data));
             } else {
                 xhr.send();
@@ -237,6 +237,18 @@ class InvoiceAPI {
             return response.data;
         } catch (error) {
             throw new Error(error.message || 'Failed to save invoice');
+        }
+    }
+
+    static async updateStatus(invoiceNumber, status) {
+        try {
+            const response = await Ajax.request('api.php', 'PUT', { invoice_number: invoiceNumber, status });
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to update status');
+            }
+            return response.data;
+        } catch (error) {
+            throw new Error(error.message || 'Failed to update status');
         }
     }
 
@@ -310,6 +322,7 @@ class InvoiceApp {
             ship_to: shipToEl ? shipToEl.value : null,
             invoice_date: formData.get('invoice_date'),
             due_date: formData.get('due_date'),
+            status: this.editingInvoiceNumber ? (this.editingInvoiceStatus || 'unpaid') : 'unpaid',
             currency: formData.get('currency'),
             payment_mode: formData.get('payment_mode'),
             sale_agent: formData.get('sale_agent'),
@@ -376,6 +389,7 @@ class InvoiceApp {
             const result = await InvoiceAPI.save(data);
             this.showAlert('Invoice saved! Invoice #' + result.invoice_number, 'success');
             this.editingInvoiceNumber = null;
+            this.editingInvoiceStatus = null;
             this.resetForm();
             if (typeof loadInvoices === 'function') {
                 loadInvoices();
@@ -540,6 +554,8 @@ class InvoiceApp {
 
             // Set editing flag
             this.editingInvoiceNumber = inv.invoice_number;
+            // Preserve the invoice's current status when re-saving
+            this.editingInvoiceStatus = inv.status || 'unpaid';
             
             // Populate invoice number
             this.setInvoiceNumber(inv.invoice_number);
@@ -862,6 +878,193 @@ class AddressModal {
 }
 
 // Invoice List Functions
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function formatDate(isoDate) {
+    if (!isoDate) return '';
+    const parts = String(isoDate).split('-');
+    if (parts.length !== 3) return escapeHtml(isoDate);
+    const [year, month, day] = parts;
+    return `${Number(day)} ${MONTH_NAMES[Number(month) - 1] || ''} ${year}`;
+}
+
+function todayIso() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function isOverdue(inv) {
+    return inv.status !== 'paid' && inv.due_date && String(inv.due_date).slice(0, 10) < todayIso();
+}
+
+function getAvatarClass(name) {
+    const colors = ['avatar-1', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6'];
+    let hash = 0;
+    for (let i = 0; i < String(name).length; i++) {
+        hash = (hash * 31 + String(name).charCodeAt(i)) >>> 0;
+    }
+    return colors[hash % colors.length];
+}
+
+function getInitials(name) {
+    const words = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return '?';
+    return (words[0][0] + (words[1] ? words[1][0] : '')).toUpperCase();
+}
+
+function formatMoney(inv, field) {
+    const symbol = InvoiceApp.getCurrencySymbol(inv.currency || '');
+    return `${symbol}${Number(inv[field] || 0).toFixed(2)}`;
+}
+
+function getStatusMeta(inv) {
+    if (isOverdue(inv)) return { key: 'overdue', label: 'Overdue' };
+    const status = inv.status && ['draft', 'unpaid', 'paid'].includes(inv.status) ? inv.status : 'unpaid';
+    const labels = { draft: 'Draft', unpaid: 'Unpaid', paid: 'Paid' };
+    return { key: status, label: labels[status] };
+}
+
+function renderStatusCell(inv) {
+    const meta = getStatusMeta(inv);
+    const menuItems = ['draft', 'unpaid', 'paid']
+        .filter(s => s !== (meta.key === 'overdue' ? 'unpaid' : meta.key))
+        .map(s => `
+            <li>
+                <button type="button" class="dropdown-item" onclick="setStatus(${Number(inv.invoice_number)}, '${s}')">
+                    ${s === 'draft' ? 'Mark as Draft' : s === 'paid' ? 'Mark as Paid' : 'Mark as Unpaid'}
+                </button>
+            </li>
+        `).join('');
+    return `
+        <div class="dropdown status-dropdown">
+            <button type="button" class="badge status-badge status-${meta.key}" data-bs-toggle="dropdown" aria-expanded="false">
+                ${meta.label} <i class="fas fa-chevron-down fa-2xs ms-1"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end status-menu fs-6">${menuItems}</ul>
+        </div>
+    `;
+}
+
+function renderTags(tags) {
+    if (!tags || String(tags).trim() === '') return '<span class="text-muted small">—</span>';
+    return String(tags)
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean)
+        .map(t => `<span class="tag-chip">${escapeHtml(t)}</span>`)
+        .join('');
+}
+
+function renderEmptyState() {
+    return `
+        <tr>
+            <td colspan="9">
+                <div class="empty-state py-4">
+                    <div class="empty-state-icon"><i class="fas fa-file-invoice"></i></div>
+                    <h6 class="mb-1">No invoices yet</h6>
+                    <p class="text-muted small mb-3">Create your first invoice to get started.</p>
+                    <a href="index.php" class="btn btn-primary btn-sm btn-shadow"><i class="fas fa-plus"></i> Create your first invoice</a>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+function updateStats() {
+    const invoices = InvoiceApp.invoicesCache;
+    const currency = invoices.length ? InvoiceApp.getCurrencySymbol(invoices[0].currency || '') : 'SR';
+    const sum = (list, field) => list.reduce((acc, inv) => acc + Number(inv[field] || 0), 0);
+
+    const unpaid = invoices.filter(inv => inv.status !== 'paid');
+    const paid = invoices.filter(inv => inv.status === 'paid');
+
+    const elTotal = document.getElementById('statTotalValue');
+    const elOutstanding = document.getElementById('statOutstandingValue');
+    const elPaid = document.getElementById('statPaidValue');
+    const elTax = document.getElementById('statTaxValue');
+
+    if (elTotal) elTotal.textContent = invoices.length;
+    if (elOutstanding) elOutstanding.textContent = currency + sum(unpaid, 'total').toFixed(2);
+    if (elPaid) elPaid.textContent = currency + sum(paid, 'total').toFixed(2);
+    if (elTax) elTax.textContent = currency + sum(invoices, 'total_tax').toFixed(2);
+}
+
+function renderInvoiceTable(invoices) {
+    const body = document.getElementById('invoiceTableBody');
+    if (!body) return;
+
+    updateStats();
+
+    const counter = document.getElementById('resultCounter');
+    if (counter) {
+        const total = InvoiceApp.invoicesCache.length;
+        counter.textContent = invoices.length === total
+            ? `Showing ${total} invoice${total === 1 ? '' : 's'}`
+            : `Showing ${invoices.length} of ${total} invoices`;
+    }
+
+    if (!invoices.length) {
+        body.innerHTML = renderEmptyState();
+        return;
+    }
+
+    body.innerHTML = invoices.map(inv => {
+        const overdue = isOverdue(inv);
+        return `
+        <tr class="${overdue ? 'overdue-row' : ''}">
+            <td><span class="inv-pill">INV-${escapeHtml(inv.invoice_number)}</span></td>
+            <td>
+                <div class="customer-cell">
+                    <span class="avatar ${getAvatarClass(inv.customer)}">${escapeHtml(getInitials(inv.customer))}</span>
+                    <span class="customer-name">${escapeHtml(inv.customer)}</span>
+                </div>
+            </td>
+            <td class="amount-cell">${escapeHtml(formatMoney(inv, 'total'))}</td>
+            <td class="text-muted">${escapeHtml(formatMoney(inv, 'total_tax'))}</td>
+            <td class="date-cell">${formatDate(inv.invoice_date)}</td>
+            <td class="date-cell ${overdue ? 'date-overdue' : ''}">${formatDate(inv.due_date)}</td>
+            <td>${renderTags(inv.tags)}</td>
+            <td>${renderStatusCell(inv)}</td>
+            <td class="text-end">
+                <div class="actions-cell">
+                    <button class="btn btn-sm btn-outline-primary" title="View PDF" onclick="InvoiceApp.viewInvoice(${Number(inv.invoice_number)})">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" title="Edit" onclick="InvoiceApp.editInvoice(${Number(inv.invoice_number)})">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" title="Delete" onclick="InvoiceApp.deleteInvoice(${Number(inv.invoice_number)})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+        `;
+    }).join('');
+}
+
+async function setStatus(invoiceNumber, status) {
+    const inv = InvoiceApp.invoicesCache.find(i => Number(i.invoice_number) === Number(invoiceNumber));
+    if (!inv || inv.status === status) return;
+    try {
+        await InvoiceAPI.updateStatus(invoiceNumber, status);
+        inv.status = status;
+        InvoiceApp.showAlert(`Invoice #${invoiceNumber} marked as ${status}.`, 'success');
+        renderInvoiceTable(InvoiceApp.invoicesCache);
+    } catch (err) {
+        InvoiceApp.showAlert('Error updating status: ' + err.message, 'danger');
+    }
+}
+
 async function loadInvoices() {
     try {
         const invoices = await InvoiceAPI.getAll();
@@ -870,42 +1073,6 @@ async function loadInvoices() {
     } catch (err) {
         InvoiceApp.showAlert('Error loading invoices: ' + err.message, 'danger');
     }
-}
-
-function renderInvoiceTable(invoices) {
-    const body = document.getElementById('invoiceTableBody');
-    if (!body) return;
-
-    body.innerHTML = '';
-    if (!invoices.length) {
-        body.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No invoices yet</td></tr>';
-        return;
-    }
-
-    invoices.forEach(inv => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>INV-${inv.invoice_number}</td>
-            <td>${inv.currency || ''}${Number(inv.total || 0).toFixed(2)}</td>
-            <td>${inv.currency || ''}${Number(inv.total_tax || 0).toFixed(2)}</td>
-            <td>${inv.invoice_date || ''}</td>
-            <td>${inv.customer || ''}</td>
-            <td>${inv.tags || ''}</td>
-            <td>${inv.due_date || ''}</td>
-            <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="InvoiceApp.viewInvoice(${inv.invoice_number})">
-                    <i class="fas fa-file-pdf"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-secondary me-1" onclick="InvoiceApp.editInvoice(${inv.invoice_number})">
-                    <i class="fas fa-pen"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="InvoiceApp.deleteInvoice(${inv.invoice_number})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        body.appendChild(tr);
-    });
 }
 
 // Global functions for backwards compatibility

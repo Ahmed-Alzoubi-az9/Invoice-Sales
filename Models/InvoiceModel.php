@@ -24,7 +24,7 @@ class InvoiceModel {
         $stmt = $this->db->query("
             SELECT invoice_number, customer, tags, invoice_date, due_date,
                    currency, total, total_tax, sale_agent, payment_mode,
-                   discount_value, sub_total, adjustment, admin_note
+                   discount_value, sub_total, adjustment, admin_note, status
             FROM invoices
             ORDER BY invoice_number DESC
         ");
@@ -102,11 +102,11 @@ class InvoiceModel {
     private function createInvoice($data) {
         $stmt = $this->db->prepare("
             INSERT INTO invoices (
-                invoice_number, customer, tags, bill_to, ship_to, invoice_date, due_date,
+                invoice_number, customer, tags, bill_to, ship_to, invoice_date, due_date, status,
                 currency, payment_mode, sale_agent, discount_type, recurring_invoice,
                 admin_note, sub_total, total_tax, discount_value, adjustment, total
             ) VALUES (
-                :invoice_number, :customer, :tags, :bill_to, :ship_to, :invoice_date, :due_date,
+                :invoice_number, :customer, :tags, :bill_to, :ship_to, :invoice_date, :due_date, :status,
                 :currency, :payment_mode, :sale_agent, :discount_type, :recurring_invoice,
                 :admin_note, :sub_total, :total_tax, :discount_value, :adjustment, :total
             )
@@ -120,6 +120,7 @@ class InvoiceModel {
             ':ship_to'           => $data['ship_to'] ?? null,
             ':invoice_date'      => $data['invoice_date'],
             ':due_date'          => $data['due_date'] ?? $data['invoice_date'],
+            ':status'            => in_array($data['status'] ?? null, ['draft', 'unpaid', 'paid'], true) ? $data['status'] : 'unpaid',
             ':currency'          => $data['currency'] ?? 'SAR',
             ':payment_mode'      => $data['payment_mode'] ?? 'Bank',
             ':sale_agent'        => $data['sale_agent'] ?? null,
@@ -147,6 +148,7 @@ class InvoiceModel {
                 ship_to = :ship_to,
                 invoice_date = :invoice_date,
                 due_date = :due_date,
+                status = :status,
                 currency = :currency,
                 payment_mode = :payment_mode,
                 sale_agent = :sale_agent,
@@ -169,6 +171,7 @@ class InvoiceModel {
             ':ship_to'           => $data['ship_to'] ?? null,
             ':invoice_date'      => $data['invoice_date'],
             ':due_date'          => $data['due_date'] ?? $data['invoice_date'],
+            ':status'            => in_array($data['status'] ?? null, ['draft', 'unpaid', 'paid'], true) ? $data['status'] : 'unpaid',
             ':currency'          => $data['currency'] ?? 'SAR',
             ':payment_mode'      => $data['payment_mode'] ?? 'Bank',
             ':sale_agent'        => $data['sale_agent'] ?? null,
@@ -216,6 +219,19 @@ class InvoiceModel {
     public function deleteInvoice($invoiceNumber) {
         $stmt = $this->db->prepare("DELETE FROM invoices WHERE invoice_number = :inv");
         $stmt->execute([':inv' => $invoiceNumber]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Update only the status of an invoice (draft/unpaid/paid)
+     */
+    public function updateStatus($invoiceNumber, $status) {
+        if (!in_array($status, ['draft', 'unpaid', 'paid'], true)) {
+            throw new Exception("Invalid status: {$status}");
+        }
+
+        $stmt = $this->db->prepare("UPDATE invoices SET status = :status WHERE invoice_number = :inv");
+        $stmt->execute([':status' => $status, ':inv' => $invoiceNumber]);
         return $stmt->rowCount() > 0;
     }
 

@@ -57,6 +57,19 @@ class InvoiceController
                     }
                     $this->respond(true, null, 'Invoice deleted successfully');
 
+                case 'PUT':
+                    $data = $this->readJson();
+                    if (empty($data['invoice_number'])) {
+                        $this->respond(false, null, 'invoice_number is required', 400);
+                    }
+                    if (empty($data['status'])) {
+                        $this->respond(false, null, 'status is required', 400);
+                    }
+                    if (!$this->invoices()->updateStatus((int) $data['invoice_number'], $data['status'])) {
+                        $this->respond(false, null, 'Invoice not found', 404);
+                    }
+                    $this->respond(true, ['invoice_number' => (int) $data['invoice_number'], 'status' => $data['status']], 'Status updated successfully');
+
                 default:
                     $this->respond(false, null, 'Method not allowed', 405);
             }
