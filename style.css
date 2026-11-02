@@ -559,6 +559,7 @@ a.stat-card:hover {
     border-bottom: 1px solid var(--border);
     padding: 12px 12px;
     white-space: nowrap;
+    text-align: left;
 }
 
 .invoice-table tbody td {
@@ -568,7 +569,7 @@ a.stat-card:hover {
     color: #495057;
 }
 
-.invoice-table tbody tr:hover {
+.invoice-table tbody tr:hover td {
     background: #f6f9fd;
 }
 
@@ -593,13 +594,13 @@ a.stat-card:hover {
     font-size: 13px;
 }
 
-/* Overdue rows */
-.overdue-row {
-    background: #fff8f8;
+/* Overdue rows — tint painted on cells (Bootstrap paints table cell backgrounds) */
+.overdue-row td {
+    background-color: #fff8f8;
 }
 
-.overdue-row:hover {
-    background: #fef1f1 !important;
+.overdue-row:hover td {
+    background: #fef1f1;
 }
 
 .date-overdue {
